@@ -44,30 +44,35 @@ void get_dir_list(
 }
 
 
-bool wait_for_keypress()
+bool wait_for_keypress(const int ct = 1)
 {
     bool result = true;
     bool is_looping = true;
-    int c;
-    
-    while (is_looping)
+    int k = ct;
+
+    // loop until 'n' (next) or 'q' (quit) or timeout
+    while (is_looping && k--)
     {
-        c = (char)waitKey(0);
+        int c = (char)waitKey(1);
     
         if ((c == 'n') || (c == 'q'))
         {
             is_looping = false;
+            result = (c == 'n');
         }
     }
 
-    return (c == 'n');
+    return result;
 }
 
 
-bool do_grab_cut(const std::string& rs, const double scale)
+bool do_grab_cut(const std::string& rs, const double scale, const cv::Rect& rfgd)
 {
     bool result = true;
-    
+    Mat bgdModel;
+    Mat fgdModel;
+
+    // read input image and resize it
     Mat img = imread(rs);
     Size imgsz = img.size();
     double img_scale = scale;
@@ -75,20 +80,19 @@ bool do_grab_cut(const std::string& rs, const double scale)
         static_cast<int>(imgsz.width * img_scale),
         static_cast<int>(imgsz.height * img_scale));
 
+    // make output mask image of same size as resized input image
     Mat new_img;
     resize(img, new_img, newsz);
     Mat mask = Mat::zeros(newsz, CV_8U);
 
+    // initialize foreground rectangle
     int fac = static_cast<int>(1.0 / scale);
+    Rect scaled_fgd = Rect(rfgd.x / fac, rfgd.y / fac, rfgd.width / fac, rfgd.height / fac);
 
-    // good settings for Data Set 2 at scale 0.1
-    Rect bottle_mask = Rect(Point(710 / fac, 20 / fac), Point(1730 / fac, 3230 / fac));
-    Mat bgdModel;
-    Mat fgdModel;
-
+    // attempt Grab Cut
     try
     {
-        grabCut(new_img, mask, bottle_mask, bgdModel, fgdModel, 1, GC_INIT_WITH_RECT);
+        grabCut(new_img, mask, scaled_fgd, bgdModel, fgdModel, 3, GC_INIT_WITH_RECT);
     }
     catch (std::exception& ex)
     {
@@ -96,29 +100,38 @@ bool do_grab_cut(const std::string& rs, const double scale)
         result = false;
     }
 
-    normalize(mask, mask, 0, 255, cv::NORM_MINMAX);
+    // show mask if all is well
+    if (result)
+    {
+        normalize(mask, mask, 0, 255, cv::NORM_MINMAX);
+        imshow("Mask", mask);
+        result = wait_for_keypress();
+    }
 
-    imshow("Mask", mask);
-    result = wait_for_keypress();
     return result;
 }
 
 
 int main(int argc, char * argv[])
 {
-    double scale = 0.1;
+    double scale;
+    Rect bottle_mask;
     std::list<std::string> listOfFiles;
+
+    // good settings for Data Set 2 at scale 0.1
+    bottle_mask = Rect(Point(710, 20), Point(1730, 3230));
+    scale = 0.1;
+
     get_dir_list("C:\\work\\BeerBottleData\\Beer Bottle Data Set 2", "*.jpg", listOfFiles);
     
     for (const auto& rs : listOfFiles)
     {
-        if (!do_grab_cut(rs, scale))
+        if (!do_grab_cut(rs, scale, bottle_mask))
         {
             break;
         }
     }
 
-    destroyWindow("hey2");
     destroyWindow("Mask");
     return 0;
 }
