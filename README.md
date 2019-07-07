@@ -1,6 +1,6 @@
 # BeerBottleData
 
-This repo has pictures of brown beer bottles.  So if you want to try to train some kind of brown beer bottle classifier, here is some data for you.  I've never had any good beer come out of a green or clear beer bottle so those colors have been omitted on purpose.
+This repo has pictures of brown beer bottles.  So if you want to try to train some kind of brown beer bottle classifier, here is some data for you.  Green and clear beer bottles have been omitted on purpose.
 
 I made a light box with a "green screen" background for photographing the bottles.  Data Set 1 has some images that are slightly blurry.  I think I accidentally selected the wrong focus mode for those pictures.  So I did a reshoot with the same set of beer bottles.  That's why there's Data Set 1 and Data Set 1 Reshoot.  I also don't know how effective my attempt at making a green screen will be for extracting just the bottle from the image.  Hopefully there are enough good shots to make the data useful.
 
