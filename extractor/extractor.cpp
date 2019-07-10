@@ -1,4 +1,4 @@
-// extractor.cpp : Defines the entry point for the console application.
+// extractor.cpp : Uses GrabCut to extract beer bottles from green backgrounds in the data set images.
 //
 
 #include "stdafx.h"
@@ -15,7 +15,6 @@
 #include <sstream>
 
 using namespace cv;
-
 
 
 void get_dir_list(
@@ -66,7 +65,7 @@ bool wait_for_keypress(const int ct = 1)
 }
 
 
-bool do_grab_cut(const std::string& rs, const double scale, const cv::Rect& rfgd)
+bool do_grab_cut(const std::string& rs, const double scale, const cv::Rect& rfgd, const int iter_ct = 1)
 {
     bool result = true;
     Mat bgdModel;
@@ -85,14 +84,42 @@ bool do_grab_cut(const std::string& rs, const double scale, const cv::Rect& rfgd
     resize(img, new_img, newsz);
     Mat mask = Mat::zeros(newsz, CV_8U);
 
-    // initialize foreground rectangle
+    // initialize scaled foreground rectangle
     int fac = static_cast<int>(1.0 / scale);
     Rect scaled_fgd = Rect(rfgd.x / fac, rfgd.y / fac, rfgd.width / fac, rfgd.height / fac);
+
+    // BGR -> XYZ* YCrCb* HSV Lab Luv HLS YUV*
+    // some of the BGR images have "blooming" in the green background because they're overexposed
+    // sometimes that blooming was being miscategorized as a foreground pixel
+    // switching to different a color space seems to provide better segmentation
+    // asterisks indicate color conversions that work well (YUV may be best overall)
+    Mat new_color_img;
+    cvtColor(new_img, new_color_img, COLOR_BGR2YUV);
 
     // attempt Grab Cut
     try
     {
-        grabCut(new_img, mask, scaled_fgd, bgdModel, fgdModel, 3, GC_INIT_WITH_RECT);
+        // do at least one iteration initialized from mask around probable bottle
+        grabCut(new_color_img, mask, scaled_fgd, bgdModel, fgdModel, 1, GC_INIT_WITH_RECT);
+
+        // perform optional iterations of GrabCut
+        // keep going until limit reached or mask stops changing
+        int n;
+        for (n = 1; n < iter_ct; n++)
+        {
+            Mat mask_copy;
+            mask.copyTo(mask_copy);
+            grabCut(new_color_img, mask, scaled_fgd, bgdModel, fgdModel, 1, GC_INIT_WITH_MASK);
+
+            cv::Mat D;
+            absdiff(mask, mask_copy, D);
+            if (cv::sum(D) == cv::Scalar::all(0))
+            {
+                break;
+            }
+        }
+
+        std::cout << rs << " " << n << std::endl;
     }
     catch (std::exception& ex)
     {
@@ -103,8 +130,29 @@ bool do_grab_cut(const std::string& rs, const double scale, const cv::Rect& rfgd
     // show mask if all is well
     if (result)
     {
-        normalize(mask, mask, 0, 255, cv::NORM_MINMAX);
-        imshow("Mask", mask);
+        // modify mask so it only has foreground pixels
+        mask = (mask >= GC_PR_FGD);
+
+        // TODO -- use some morphology operators to clean up the mask (fill holes, remove speckles, etc.)
+#if 0
+        int morph_size = 2;
+        Mat element = getStructuringElement(MORPH_ELLIPSE, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
+        morphologyEx(new_img, mg, MORPH_GRADIENT, element);
+#endif
+
+        if (false)
+        {
+            // a normalization is required if displaying just the mask
+            normalize(mask, mask, 0, 255, cv::NORM_MINMAX);
+            imshow("Mask", mask);
+        }
+        else
+        {
+            // create a new blank color image and copy masked bottle into it
+            Mat x = Mat::zeros(newsz, CV_8UC3);
+            new_img.copyTo(x, mask);
+            imshow("Mask", x);
+        }
         result = wait_for_keypress();
     }
 
@@ -116,23 +164,40 @@ int main(int argc, char * argv[])
 {
     double scale;
     Rect bottle_mask;
-    std::list<std::string> listOfFiles;
+    std::list<std::string> listOfDataSets;
 
-    // good settings for Data Set 2 at scale 0.1
-    bottle_mask = Rect(Point(710, 20), Point(1730, 3230));
+    listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 1 Reshoot");
+    listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 2");
+    listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 3");
+
+    // all bottles should be in this region in full-sized images
+    bottle_mask = Rect(Point(690, 20), Point(1770, 3230));
+
+    // scale things down for quicker processing
+    // use a scale factor whose reciprocal is an integer
+    // some "blooming" boundaries may be seen with larger scale factors
     scale = 0.1;
 
-    get_dir_list("C:\\work\\BeerBottleData\\Beer Bottle Data Set 2", "*.jpg", listOfFiles);
-    
-    for (const auto& rs : listOfFiles)
+    bool is_halted = false;
+    for (const auto& rsdata : listOfDataSets)
     {
-        if (!do_grab_cut(rs, scale, bottle_mask))
+        std::list<std::string> listOfFiles;
+        get_dir_list(rsdata, "*.jpg", listOfFiles);
+        for (const auto& rs : listOfFiles)
+        {
+            if (!do_grab_cut(rs, scale, bottle_mask))
+            {
+                is_halted = true;
+                break;
+            }
+        }
+
+        if (is_halted)
         {
             break;
         }
     }
 
-    destroyWindow("Mask");
+    destroyAllWindows();
     return 0;
 }
-
