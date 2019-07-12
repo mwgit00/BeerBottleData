@@ -12,6 +12,7 @@
 #include <list>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 
 using namespace cv;
@@ -65,7 +66,7 @@ bool wait_for_keypress(const int ct = 1)
 }
 
 
-bool do_grab_cut(const std::string& rs, const double scale, const cv::Rect& rfgd, const int iter_ct = 1)
+bool do_grab_cut(const int num, const std::string& rs, const double scale, const cv::Rect& rfgd, const int iter_ct = 1)
 {
     bool result = true;
     Mat bgdModel;
@@ -133,25 +134,36 @@ bool do_grab_cut(const std::string& rs, const double scale, const cv::Rect& rfgd
         // modify mask so it only has foreground pixels
         mask = (mask >= GC_PR_FGD);
 
-        // TODO -- use some morphology operators to clean up the mask (fill holes, remove speckles, etc.)
-#if 0
-        int morph_size = 2;
-        Mat element = getStructuringElement(MORPH_ELLIPSE, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
-        morphologyEx(new_img, mg, MORPH_GRADIENT, element);
-#endif
+        // TODO -- maybe use some morphology operators to clean up the mask (fill holes, remove speckles, etc.)
+        // TODO -- maybe add a flag to choose between viewing binary mask or masked bottle
 
-        if (false)
+        if (false) // change this to true to view binary mask
         {
-            // a normalization is required if displaying just the mask
+            // a normalization is required if displaying just the binary mask
             normalize(mask, mask, 0, 255, cv::NORM_MINMAX);
             imshow("Mask", mask);
         }
         else
         {
-            // create a new blank color image and copy masked bottle into it
-            Mat x = Mat::zeros(newsz, CV_8UC3);
-            new_img.copyTo(x, mask);
+            // create masked bottle image with gray background
+            Mat msk_img = Mat::zeros(newsz, CV_8UC3);
+            msk_img.setTo(cv::Scalar(128, 128, 128));
+            new_img.copyTo(msk_img, mask);
+
+            // create double wide image
+            // copy scaled original to right side and masked bottle to left side
+            Size dblsz = newsz;
+            dblsz.width *= 2;
+            Mat x = Mat::zeros(dblsz, CV_8UC3);
+            new_img.copyTo(x(Rect(0, 0, newsz.width, newsz.height)));
+            msk_img.copyTo(x(Rect(0 + newsz.width, 0, newsz.width, newsz.height)));
             imshow("Mask", x);
+#if 0
+            // saves image with an ID number in the name: i.e. bottNNNN.png
+            std::ostringstream oss;
+            oss << "bott" << std::setw(4) << std::setfill('0') << num << ".png";
+            imwrite(oss.str().c_str(), x);
+#endif
         }
         result = wait_for_keypress();
     }
@@ -163,21 +175,22 @@ bool do_grab_cut(const std::string& rs, const double scale, const cv::Rect& rfgd
 int main(int argc, char * argv[])
 {
     double scale;
-    Rect bottle_mask;
+    Rect initial_bottle_mask;
     std::list<std::string> listOfDataSets;
 
     listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 1 Reshoot");
     listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 2");
     listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 3");
 
-    // all bottles should be in this region in full-sized images
-    bottle_mask = Rect(Point(690, 20), Point(1770, 3230));
+    // all bottles should be in this region in the full-sized images
+    initial_bottle_mask = Rect(Point(690, 20), Point(1770, 3230));
 
     // scale things down for quicker processing
     // use a scale factor whose reciprocal is an integer
-    // some "blooming" boundaries may be seen with larger scale factors
+    // some "blooming" boundaries may be seen with scale factors larger than 0.1
     scale = 0.1;
 
+    int num = 0;
     bool is_halted = false;
     for (const auto& rsdata : listOfDataSets)
     {
@@ -185,7 +198,7 @@ int main(int argc, char * argv[])
         get_dir_list(rsdata, "*.jpg", listOfFiles);
         for (const auto& rs : listOfFiles)
         {
-            if (!do_grab_cut(rs, scale, bottle_mask))
+            if (!do_grab_cut(num++, rs, scale, initial_bottle_mask))
             {
                 is_halted = true;
                 break;
