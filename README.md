@@ -8,6 +8,8 @@ Data Set 1 has photos of 12 different beer bottles.  Some of the shots in Data S
 
 The "Grab Cut" algorithm is reasonably effective at extracting the bottle from the green background.  See the **extractor** folder for a Windows console application that goes through Data Set 1 Reshoot, Data Set 2, and Data Set 3.  It scales down the images by a factor of 0.1, applies Grab Cut, and shows the resulting masked bottle image.
 
-The **extractor** was tested in Visual Studio 2015 on a Windows 7 machine with OpenCV 4.0.1.
+The **extractor** project was built and tested in Visual Studio 2015 on a Windows 7 machine with OpenCV 4.0.1.
+
+The **extractor_vs2019** project was built and tested in Visual Studio 2019 on a Windows 10 machine with OpenCV 4.1.0.
 
 Drink responsibly!
