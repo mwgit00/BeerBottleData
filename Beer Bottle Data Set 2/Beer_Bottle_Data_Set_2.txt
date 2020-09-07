@@ -1,0 +1,12 @@
+Beer Bottle Data Set 2
+
+Blue Pants Brewery Traditional Oktoberfest,8
+Killian's Irish Red,8
+Miller Lite,8
+Founders Dirty Bastard Scotch Style Ale,8
+Shiner Bock,8
+Kentucky Bourbon Barrel Ale,8
+Blue Moon Harvest Pumpkin Ale,8
+Lazy Magnolia Southern Pecan,8
+Bud Light,8
+Yuengling Black & Tan,8

@@ -1,0 +1,14 @@
+Beer Bottle Data Set 1
+
+Guinness 200th Anniversary Export Stout,8
+Breckenridge Brewery Vanilla Porter,9
+Bud Light (large label),8
+Guinness Blonde,8
+Fairhope Amber,8
+Hoegaarden Belgian Wheat Beer,9
+Blue Pants Brewery Chocolate Oatmeal Porter,8
+Budweiser 1933 Repeal Reserve Amber Lager,8
+Unibroue Ephemere,9
+Founders Porter,8
+Leffe Blonde,8
+New Belgium Fat Tire,8

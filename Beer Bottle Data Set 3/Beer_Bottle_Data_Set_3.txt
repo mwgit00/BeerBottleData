@@ -1,0 +1,10 @@
+Beer Bottle Data Set 3
+
+Budweiser Copper Lager Jim Beam,8
+New Belgium Skinny Dip,8
+Abita Amber,8
+Guinness Extra Stout,8
+Blue Moon Mountain Abbey Ale,8
+Leinenkugels Cranberry Ginger Shandy,8
+Sweetwater Waterkeeper Hefeweizen Ale,8
+Yellowhammer Brewing Rebellion,8
