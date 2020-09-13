@@ -1,0 +1,10 @@
+Beer Bottle Data Set 4
+
+Budweiser Discovery Reserve American Red Lager,8,(out of order)
+Yuengling Golden Pilsner,8
+Blue Point Toasted Lager American Style Amber,8
+Patagonia Cerveza,8
+North Coast Brewing Co. Old Rasputin Russian Imperial Stout,8
+Longboard Island Lager,8
+Blue Moon Mango Wheat,8
+North Coast Brewing Co. Brother Thelonious Belgian Style Abbey Ale,8

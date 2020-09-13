@@ -91,7 +91,12 @@ bool wait_for_keypress(const int ct = 1)
 }
 
 
-bool do_grab_cut(const int num, const std::string& rs, const double scale, const cv::Rect& rfgd, const int iter_ct = 1)
+static bool do_grab_cut(
+    const int num,
+    const std::string& rs,
+    const double scale,
+    const cv::Rect& rfgd,
+    const int iter_ct = 1)
 {
     bool result = true;
     Mat bgdModel;
@@ -120,7 +125,7 @@ bool do_grab_cut(const int num, const std::string& rs, const double scale, const
     // switching to different a color space seems to provide better segmentation
     // asterisks indicate color conversions that work well (YUV may be best overall)
     Mat new_color_img;
-    cvtColor(new_img, new_color_img, COLOR_BGR2YUV);
+    cvtColor(new_img, new_color_img, COLOR_BGR2YUV);  // HSV for set 4
 
     // attempt Grab Cut
     try
@@ -170,6 +175,8 @@ bool do_grab_cut(const int num, const std::string& rs, const double scale, const
         }
         else
         {
+            rectangle(new_img, scaled_fgd, { 255,0,0 });
+
             // create masked bottle image with gray background
             Mat msk_img = Mat::zeros(newsz, CV_8UC3);
             msk_img.setTo(cv::Scalar(128, 128, 128));
@@ -199,21 +206,34 @@ bool do_grab_cut(const int num, const std::string& rs, const double scale, const
 
 int main(int argc, char * argv[])
 {
-    double scale;
     Rect initial_bottle_mask;
     std::list<std::string> listOfDataSets;
 
+    // sometimes more iterations help
+    int iters;
+    
+    // scale things down for quicker processing
+    // use a scale factor whose reciprocal is an integer
+    // some "blooming" boundaries may be seen with scale factors larger than 0.1
+    double scale;
+
+#if 0
+    iters = 1;
     listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 1 Reshoot");
     listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 2");
     listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 3");
 
     // all bottles should be in this region in the full-sized images
     initial_bottle_mask = Rect(Point(690, 20), Point(1770, 3230));
+    scale = 0.1
+#else
+    iters = 5;
+    listOfDataSets.push_back("C:\\work\\BeerBottleData\\Beer Bottle Data Set 4");
 
-    // scale things down for quicker processing
-    // use a scale factor whose reciprocal is an integer
-    // some "blooming" boundaries may be seen with scale factors larger than 0.1
+    // all bottles should be in this region in the full-sized images
+    initial_bottle_mask = Rect(Point(390, 10), Point(1550, 3220));
     scale = 0.1;
+#endif
 
     int num = 0;
     bool is_halted = false;
@@ -223,7 +243,7 @@ int main(int argc, char * argv[])
         get_dir_list(rsdata, "*.jpg", listOfFiles);
         for (const auto& rs : listOfFiles)
         {
-            if (!do_grab_cut(num++, rs, scale, initial_bottle_mask))
+            if (!do_grab_cut(num++, rs, scale, initial_bottle_mask, iters))
             {
                 is_halted = true;
                 break;
