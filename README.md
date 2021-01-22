@@ -13,3 +13,13 @@ The **extractor** project was built and tested in Visual Studio 2015 on a Window
 The **extractor_vs2019** project was built and tested in Visual Studio 2019 on a Windows 10 machine with OpenCV 4.3.0.
 
 Drink responsibly!
+
+## Videos
+
+Click the images for YouTube videos showing beer bottle data sets:
+
+[![Gradient Template Demo Video](http://img.youtube.com/vi/T1v3UY_k9lg/0.jpg)](http://www.youtube.com/watch?v=T1v3UY_k9lg)
+
+[![Gradient Template Demo Video](http://img.youtube.com/vi/eB1OTePfVxk/0.jpg)](http://www.youtube.com/watch?v=eB1OTePfVxk)
+
+[![Gradient Template Demo Video](http://img.youtube.com/vi/r4XwJhrDc2U/0.jpg)](http://www.youtube.com/watch?v=r4XwJhrDc2U)
